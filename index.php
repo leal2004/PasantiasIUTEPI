@@ -1,0 +1,120 @@
+<?php
+// postular.php
+
+// 1. Obtener y sanitizar los datos pasados por URL
+$correo_empresa = isset($_GET['correo']) ? htmlspecialchars($_GET['correo']) : 'correo-no-encontrado@ejemplo.com';
+$nombre_empresa = isset($_GET['nombre']) ? htmlspecialchars($_GET['nombre']) : 'Empresa Desconocida';
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postularse a <?php echo $nombre_empresa; ?></title>
+    <style>
+        :root {
+            --color-vinotinto: #800000;
+            --color-blanco: #ffffff;
+            --color-gris-claro: #f4f4f4;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--color-gris-claro);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background-color: var(--color-blanco);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 550px;
+            border-top: 5px solid var(--color-vinotinto);
+        }
+        h2 {
+            color: var(--color-vinotinto);
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input[type="text"], input[type="email"], textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        textarea {
+            resize: vertical;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--color-vinotinto);
+            color: var(--color-blanco);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .submit-btn:hover {
+            background-color: #6a0000;
+        }
+        .target-info {
+            background-color: #f7f7f7;
+            border-left: 5px solid var(--color-vinotinto);
+            padding: 15px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        .target-info strong {
+            color: var(--color-vinotinto);
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Postularse a un Puesto</h2>
+        
+        <div class="target-info">
+            Estás a punto de postularte para un puesto en: 
+            <br><strong><?php echo $nombre_empresa; ?></strong>
+        </div>
+
+        <form action="procesar_postulacion_final.php" method="POST" enctype="multipart/form-data">
+            
+            <input type="hidden" name="correo_destino" value="<?php echo $correo_empresa; ?>">
+            <input type="hidden" name="nombre_destino" value="<?php echo $nombre_empresa; ?>">
+            
+            <label for="nombre_candidato">Tu Nombre Completo:</label>
+            <input type="text" id="nombre_candidato" name="nombre_candidato" required>
+            
+            <label for="correo_candidato">Tu Correo Electrónico:</label>
+            <input type="email" id="correo_candidato" name="correo_candidato" required>
+            
+            <label for="curriculum">Adjuntar CV (Opcional):</label>
+            <input type="file" id="curriculum" name="curriculum" accept=".pdf,.doc,.docx" style="margin-bottom: 25px;">
+            
+            <label for="mensaje">Mensaje o Carta de Presentación:</label>
+            <textarea id="mensaje" name="mensaje" rows="6" required></textarea>
+            
+            <button type="submit" class="submit-btn">Enviar Postulación a <?php echo $nombre_empresa; ?></button>
+        </form>
+    </div>
+</body>
+</html>

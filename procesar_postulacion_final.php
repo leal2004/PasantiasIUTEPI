@@ -1,0 +1,172 @@
+<?php
+// procesar_postulacion_final.php
+
+// Carga de PHPMailer
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
+
+// Asegúrate de que esta ruta sea correcta para tu librería
+require 'phpmailer/Exception.php';
+require 'phpmailer/PHPMailer.php';
+require 'phpmailer/SMTP.php';
+
+if ($_SERVER["REQUEST_METHOD"] != "POST") {
+    die("Acceso denegado.");
+}
+
+// 1. Obtener y sanitizar datos del formulario
+$correo_destino = filter_var($_POST['correo_destino'], FILTER_SANITIZE_EMAIL);
+$nombre_empresa = htmlspecialchars($_POST['nombre_destino']);
+$nombre_candidato = htmlspecialchars($_POST['nombre_candidato']);
+$correo_candidato = filter_var($_POST['correo_candidato'], FILTER_SANITIZE_EMAIL);
+$mensaje_candidato = htmlspecialchars($_POST['mensaje']);
+
+// 2. Validación básica
+if (!filter_var($correo_destino, FILTER_VALIDATE_EMAIL) || !filter_var($correo_candidato, FILTER_VALIDATE_EMAIL)) {
+    die("Correo de destino o de candidato inválido.");
+}
+
+// --- 3. CONFIGURACIÓN Y ENVÍO DEL CORREO CON PHPMailer ---
+
+$mail = new PHPMailer(true);
+$resultado_envio = ['success' => false, 'titulo' => '❌ Error al Enviar el Correo', 'mensaje' => ''];
+
+try {
+    // 3.1. Configuración SMTP (TU CONFIGURACIÓN DE GMAIL)
+    $mail->isSMTP();
+    $mail->Host       = 'smtp.gmail.com'; 
+    $mail->SMTPAuth   = true;
+    
+    // ⬇️ TUS CREDENCIALES FINALES (Correo y Contraseña de Aplicación sin espacios) ⬇️
+    $mail->Username   = 'lealtadangel0@gmail.com'; 
+    $mail->Password   = 'nmqpzyzgz y wlhfjp'; // ⬅️ ¡PEGAR AQUÍ SIN ESPACIOS!
+    
+    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; 
+    $mail->Port       = 587;
+
+    // 3.2. Configuración de Remitente y Destinatario
+    $mail->setFrom('lealtadangel0@gmail.com', 'Sistema de Postulaciones'); // Tu correo para envío
+    $mail->addAddress($correo_destino, $nombre_empresa);                          // Correo de la EMPRESA (DESTINO)
+    $mail->addReplyTo($correo_candidato, $nombre_candidato);                      // Responder al CANDIDATO
+
+    // 3.3. Contenido del Correo
+    $mail->isHTML(false);
+    $mail->Subject = "Postulacion: " . $nombre_candidato . " - Puesto en " . $nombre_empresa;
+    
+    $cuerpo_mensaje = "Hola " . $nombre_empresa . ",\n\n";
+    $cuerpo_mensaje .= "¡Tienes una nueva postulación!\n";
+    $cuerpo_mensaje .= "El candidato " . $nombre_candidato . " se ha postulado a un puesto:\n\n";
+    $cuerpo_mensaje .= "--- Datos del Candidato ---\n";
+    $cuerpo_mensaje .= "Nombre: " . $nombre_candidato . "\n";
+    $cuerpo_mensaje .= "Correo: " . $correo_candidato . "\n\n";
+    $cuerpo_mensaje .= "--- Mensaje de Presentación ---\n";
+    $cuerpo_mensaje .= $mensaje_candidato . "\n\n";
+    $cuerpo_mensaje .= "Por favor, utiliza la función 'Responder' de tu correo para contactar al candidato directamente.\n";
+
+    $mail->Body    = $cuerpo_mensaje;
+
+    // 3.4. Manejo de Archivos Adjuntos (CV)
+    if (isset($_FILES['curriculum']) && $_FILES['curriculum']['error'] == UPLOAD_ERR_OK) {
+        $mail->addAttachment($_FILES['curriculum']['tmp_name'], $_FILES['curriculum']['name']);
+    }
+
+    $mail->send();
+    $resultado_envio['success'] = true;
+    $resultado_envio['titulo'] = '✅ ¡Postulación Enviada con Éxito!';
+    $resultado_envio['mensaje'] = 'Tu postulación fue enviada correctamente a ' . htmlspecialchars($nombre_empresa) . '.';
+
+} catch (Exception $e) {
+    $resultado_envio['mensaje'] = "El mensaje no pudo ser enviado. Error: {$mail->ErrorInfo}. " .
+                                  "Solución: Revisa la Contraseña de Aplicación de 16 dígitos y que NO tenga espacios.";
+}
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title><?php echo $resultado_envio['titulo']; ?></title>
+    <style>
+        /* Estilos Vinotinto */
+        :root {
+            --vinotinto: #800000; 
+            --vinotinto-claro: #A52A2A; 
+            --success: #28a745;
+            --error: #dc3545;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f4f4f9; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            text-align: center;
+            border-top: 5px solid var(--vinotinto);
+        }
+        h2 {
+            color: <?php echo $resultado_envio['success'] ? 'var(--success)' : 'var(--error)'; ?>;
+            font-size: 2em;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        p {
+            color: #333;
+            line-height: 1.6;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 10px 20px;
+            background-color: var(--vinotinto);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background-color: var(--vinotinto-claro);
+        }
+        .error-details {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid var(--error);
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <?php if ($resultado_envio['success']): ?>
+            <span style="font-size: 4em; color: var(--success);"></span>
+            <h2><?php echo $resultado_envio['titulo']; ?></h2>
+            <p><?php echo $resultado_envio['mensaje']; ?></p>
+            <a href="listado_sistema_3.php" class="btn">Volver al Inicio</a>
+        <?php else: ?>
+            <span style="font-size: 4em; color: var(--error);"></span>
+            <h2><?php echo $resultado_envio['titulo']; ?></h2>
+            <p>Por favor, revisa la información ingresada e intenta de nuevo.</p>
+            <div class="error-details">
+                **Detalles del problema:**
+                <p><?php echo $resultado_envio['mensaje']; ?></p>
+            </div>
+            <a href="javascript:history.back()" class="btn">Intentar de Nuevo</a>
+        <?php endif; ?>
+    </div>
+</body>
+</html>
